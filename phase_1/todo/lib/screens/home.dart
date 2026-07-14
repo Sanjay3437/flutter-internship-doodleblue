@@ -10,6 +10,9 @@ class Home extends StatefulWidget {
 }
 class _HomeState extends State<Home> {
 
+  // final TextEditingController titleController =
+  // TextEditingController();
+
   List<TextEditingController> _taskcontroller = [
     TextEditingController(),
   ];
@@ -17,11 +20,14 @@ class _HomeState extends State<Home> {
   late Box<TaskModel> taskBox;
 
   void loadTasks() {
+    for (final c in _taskcontroller) {
+      c.dispose();
+    }
 
     _taskcontroller.clear();
     _isCompleted.clear();
 
-    for (var task in taskBox.values) {
+    for (final task in taskBox.values) {
 
       _taskcontroller.add(
         TextEditingController(text: task.task),
@@ -52,14 +58,15 @@ false,
             index,
             TaskModel(
               task: value,
+              description: taskBox.getAt(index)?.description ?? "",
               isCompleted: _isCompleted[index],
             ),
           );
 
         },
-        onSubmitted: (_) {
-          _addNewTaskField();
-        },
+        // onSubmitted: (_) {
+        //   _addNewTaskField();
+        // },
         style: TextStyle(
           decoration: _isCompleted[index] ? TextDecoration.lineThrough : TextDecoration.none,
           color: _isCompleted[index] ? Colors.grey : Colors.black,
@@ -78,6 +85,7 @@ false,
                   index,
                   TaskModel(
                     task: _taskcontroller[index].text,
+                    description: taskBox.getAt(index)?.description ?? "",
                     isCompleted: _isCompleted[index],
                   ),
                 );
@@ -90,9 +98,9 @@ false,
             icon: Icon(Icons.delete_outline, color: Color(0xFF9D2D14), size: 20),
             onPressed: () {
               setState(() {
-                _taskcontroller[index].dispose();
+                final controller = _taskcontroller.removeAt(index);
 
-                _taskcontroller.removeAt(index);
+                controller.dispose();
 
                 _isCompleted.removeAt(index);
 
@@ -131,23 +139,24 @@ false,
     loadTasks();
   }
 
-  void _addNewTaskField() {
-
-    taskBox.add(
-      TaskModel(
-        task: "",
-        isCompleted: false,
-      ),
-    );
-
-    setState(() {
-
-      _taskcontroller.add(TextEditingController());
-
-      _isCompleted.add(false);
-
-    });
-  }
+  // void _addNewTaskField() {
+  //
+  //   taskBox.add(
+  //     TaskModel(
+  //       task: "",
+  //       description: "",
+  //       isCompleted: false,
+  //     ),
+  //   );
+  //
+  //   setState(() {
+  //
+  //     _taskcontroller.add(TextEditingController());
+  //
+  //     _isCompleted.add(false);
+  //
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -157,6 +166,137 @@ false,
     super.dispose();
   }
 
+  void _showAddTaskSheet(BuildContext context)  {
+    final titleController = TextEditingController();
+    final bodyController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom, // pushes sheet up when keyboard opens
+            left: 16, right: 16, top: 30,
+          ),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'New Task',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                 SizedBox(height: 12),
+                TextFormField (
+                  controller: titleController,
+                  decoration:  InputDecoration(
+                    labelText: 'Title',
+                    labelStyle: TextStyle(color: Colors.black),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.black54),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.black54, width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:  BorderSide(color: Colors.red, width: 2),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:  BorderSide(color: Colors.red, width: 2),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a task title';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: bodyController,
+                  maxLines: 4,
+                  decoration:  InputDecoration(
+                    labelText: 'Description',
+                    labelStyle: TextStyle(color: Colors.black),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.black54),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.black54, width: 2),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00C6FF),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                    onPressed: () {
+                      // final isValid = formKey.currentState!.validate();
+                      //
+                      // if (!isValid) {
+                      //   // stop here — red error text shows automatically, sheet stays open
+                      //   return;
+                      // }
+
+                      taskBox.add(
+                          TaskModel(
+                            task: titleController.text.trim(),
+                            description: bodyController.text.trim(),
+                            isCompleted: false,
+                          )
+                      );
+
+                      setState(() {
+                        loadTasks();
+                      });
+
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Save"),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    ).whenComplete(() {
+      titleController.dispose();
+      bodyController.dispose();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,9 +337,9 @@ false,
 
             const SizedBox(height: 1),
              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                padding:  EdgeInsets.symmetric(horizontal: 20, vertical: 5),
               child: Text(
-                "${_isCompleted.where((completed) => !completed).length} active Task",
+                "${taskBox.values.where((e) => !e.isCompleted).length} active Task",
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
               ),
             ),
@@ -239,7 +379,7 @@ false,
                     const SizedBox(height: 8),
 
                     const Text(
-                      "Tap the + button to add your first task.",
+                      "Tap the ' + ' button to add your first task.",
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 14,
@@ -284,11 +424,8 @@ false,
         ],
       ),
 
-
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _addNewTaskField();
-        },
+        onPressed: () => _showAddTaskSheet(context),
         child: const Icon(Icons.add),
         tooltip: "Add task",
         backgroundColor: Color(0xFF00C6FF),
